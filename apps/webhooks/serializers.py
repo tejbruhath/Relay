@@ -8,7 +8,7 @@ from apps.core.utils import generate_signing_secret
 from apps.webhooks.models import DeliveryAttempt, WebhookEndpoint, WebhookEvent
 
 
-idempotency_redis = redis_lib.Redis.from_url(
+idempotency_redis = redis_lib.from_url(
     settings.IDEMPOTENCY_REDIS_URL, decode_responses=True
 )
 
