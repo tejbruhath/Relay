@@ -6,9 +6,9 @@ import { useEffect, useRef, useState } from 'react'
 const PANELS = [
   {
     step: '01',
-    title: 'You fire an event',
+    title: 'Every request is signed.',
     description:
-      'POST a JSON payload to the Relay API with your event type, endpoint target, and idempotency key. Relay returns 202 Accepted in under 50ms — your request is queued, signed, and dispatched asynchronously. Zero coupling between your producer and consumer.',
+      'Relay computes an HMAC-SHA256 signature from your endpoint secret and the request payload. Your server verifies it. Tampered requests are rejected before they touch your code.',
   },
   {
     step: '02',
@@ -36,93 +36,102 @@ const PANELS = [
   },
 ]
 
-// ─── Animated Terminal (Panel 1) ──────────────────────────────────────────────
-const TERMINAL_LINES = [
-  'curl -X POST https://api.relay.dev/v1/events \\',
-  '  -H "X-Relay-Key: rk_live_••••••••" \\',
-  '  -H "Content-Type: application/json" \\',
-  '  -H "Idempotency-Key: inv-99123-attempt-1" \\',
-  "  -d '{",
-  '    "endpoint_id": "ep_01HX3K...",',
-  '    "event_type": "invoice.paid",',
-  '    "payload": {',
-  '      "invoice_id": "inv_99123",',
-  '      "amount": 4999,',
-  '      "currency": "INR"',
-  '    }',
-  "  }'",
-]
-
-function TerminalPanel({ isActive = true }: { isActive?: boolean }) {
-  const [visibleLines, setVisibleLines] = useState(0)
-
-  useEffect(() => {
-    if (!isActive) {
-      setVisibleLines(0)
-      return
-    }
-
-    let i = 0
-    const id = setInterval(() => {
-      i++
-      setVisibleLines(i)
-      if (i >= TERMINAL_LINES.length) {
-        clearInterval(id)
-      }
-    }, 240) // slowed down typing
-    return () => clearInterval(id)
-  }, [isActive])
-
+// ─── HMAC Visualization (Panel 1) ─────────────────────────────────────────────
+function HMACPanel() {
   return (
-    <div className="w-full h-full flex items-center justify-center p-8">
-      {/* Ring animation behind terminal */}
+    <div className="w-full h-full flex items-center justify-center p-8 bg-[var(--bg-base)]">
+      {/* Ring animation behind panel */}
       <div className="relative">
         <div
           className="absolute -inset-6 rounded-[24px] border border-[rgba(255,69,0,0.15)]"
           style={{ animation: 'ringPulse 3s ease-in-out infinite' }}
         />
-        <div
-          className="absolute -inset-12 rounded-[32px] border border-[rgba(255,69,0,0.07)]"
-          style={{ animation: 'ringPulse 3s ease-in-out 1s infinite' }}
-        />
-        <div className="w-full max-w-lg rounded-[12px] border border-[var(--bg-border)] overflow-hidden relative z-10">
-          {/* Title bar */}
-          <div className="flex items-center gap-2 px-4 py-3 bg-[#161b22] border-b border-[var(--bg-border)]">
-            <span className="w-3 h-3 rounded-full bg-[#da3633]" />
-            <span className="w-3 h-3 rounded-full bg-[#d29922]" />
-            <span className="w-3 h-3 rounded-full bg-[#2ea043]" />
-            <span className="ml-2 text-[12px] text-[var(--text-muted)]">terminal</span>
-          </div>
-          {/* Body */}
-          <div className="p-4 bg-[#0d1117] font-mono text-[13px] leading-relaxed min-h-[260px]">
-            {TERMINAL_LINES.slice(0, visibleLines).map((line, i) => (
-              <div key={i} className="flex">
-                <span className="text-[var(--accent-signal)] mr-2 select-none">$</span>
-                <span
-                  className={
-                    line.startsWith('  ')
-                      ? 'text-[var(--text-secondary)]'
-                      : 'text-[var(--text-primary)]'
-                  }
+        
+        <div className="w-full max-w-lg rounded-[12px] border border-[var(--bg-border)] bg-[#0d1117] overflow-hidden relative z-10 flex flex-col font-mono text-[13px] shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+          
+          {/* Top Half: Request Headers */}
+          <div className="p-6 border-b border-[var(--bg-border)]">
+            <div className="text-[11px] text-[var(--text-muted)] font-semibold tracking-widest uppercase mb-4">
+              REQUEST HEADERS
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <div className="flex">
+                <span className="w-40 text-[var(--text-secondary)]">Content-Type</span>
+                <span className="text-[var(--text-primary)]">application/json</span>
+              </div>
+              <div className="flex">
+                <span className="w-40 text-[var(--text-secondary)]">X-Relay-Event-ID</span>
+                <span className="text-[var(--text-primary)]">evt_01JXYZ...</span>
+              </div>
+              <div className="flex">
+                <span className="w-40 text-[var(--text-secondary)]">X-Relay-Timestamp</span>
+                <span className="text-[var(--text-primary)]">1727784000</span>
+              </div>
+              <div className="flex relative">
+                <span className="w-40 text-[var(--text-secondary)]">X-Relay-Signature</span>
+                <span 
+                  className="text-[var(--accent-signal)] relative"
+                  style={{
+                    animation: 'hmacGlow 2s ease-in-out infinite'
+                  }}
                 >
-                  {line}
+                  sha256=a3f9...
                 </span>
               </div>
-            ))}
-            {visibleLines < TERMINAL_LINES.length && (
-              <span
-                className="inline-block w-2 h-4 bg-[var(--accent-signal)] ml-4"
-                style={{ animation: 'typeCursor 1s step-end infinite' }}
-              />
-            )}
-            {visibleLines >= TERMINAL_LINES.length && (
-              <div className="mt-3 text-[var(--success)]">
-                → 202 Accepted · event_id: evt_01HX3K9M · queued_at: {new Date().toISOString()}
-              </div>
-            )}
+            </div>
           </div>
+
+          {/* Bottom Half: HMAC Input */}
+          <div className="p-6 bg-[#161b22]">
+            <div className="text-[11px] text-[var(--text-muted)] font-semibold tracking-widest uppercase mb-4">
+              HMAC INPUT
+            </div>
+            
+            <div className="text-[var(--text-primary)] mb-6 break-all">
+              "1727784000.&#123;"event_type":"payment..."&#125;"
+            </div>
+            
+            <div className="flex items-center justify-between text-[12px]">
+              <div className="flex items-center gap-2">
+                <span className="text-[var(--text-secondary)]">SECRET</span>
+                <span className="text-[var(--text-primary)] bg-[#0d1117] px-2 py-1 rounded border border-[var(--bg-border)]">████████</span>
+              </div>
+              
+              <div className="flex-1 px-4 relative flex items-center justify-center">
+                {/* Arrow line */}
+                <div className="absolute h-px bg-[var(--bg-border)] left-4 right-4" />
+                {/* Flowing dot */}
+                <div 
+                  className="absolute w-2 h-2 rounded-full bg-[var(--accent-signal)] shadow-[0_0_8px_var(--accent-signal)]"
+                  style={{ animation: 'hmacFlow 2s linear infinite' }}
+                />
+                <div className="relative z-10 bg-[#161b22] px-2 text-[var(--text-secondary)] font-semibold">
+                  SHA256
+                </div>
+              </div>
+              
+              <div className="text-[var(--accent-signal)] font-bold">
+                a3f9e2...
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
+      
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes hmacGlow {
+          0%, 100% { opacity: 0.4; text-shadow: none; }
+          50% { opacity: 1; text-shadow: 0 0 12px rgba(255, 69, 0, 0.6); }
+        }
+        @keyframes hmacFlow {
+          0% { left: 10%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { left: 90%; opacity: 0; }
+        }
+      `}} />
     </div>
   )
 }
@@ -136,7 +145,7 @@ function QueuePanel() {
   }, [])
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-8 p-8">
+    <div className="w-full h-full flex flex-col items-center justify-center gap-8 p-8 bg-[var(--bg-base)]">
       {/* Ring ring ring */}
       <div className="relative flex items-center justify-center mb-4">
         <div
@@ -216,7 +225,7 @@ function RetryPanel() {
   ]
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-6 p-8">
+    <div className="w-full h-full flex flex-col items-center justify-center gap-6 p-8 bg-[var(--bg-base)]">
       <div className="w-full max-w-sm space-y-2">
         {attempts.map((a, i) => (
           <div
@@ -259,7 +268,7 @@ function RetryPanel() {
 // ─── DLQ Panel (Panel 4) ──────────────────────────────────────────────────────
 function DLQPanel() {
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-6 p-8">
+    <div className="w-full h-full flex flex-col items-center justify-center gap-6 p-8 bg-[var(--bg-base)]">
       {/* DLQ stream visualization */}
       <div className="relative">
         <div
@@ -314,7 +323,7 @@ function AIAlertsPanel() {
   ]
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-6 p-8">
+    <div className="w-full h-full flex flex-col items-center justify-center gap-6 p-8 bg-[var(--bg-base)]">
       {/* Radar ring animation */}
       <div className="relative flex items-center justify-center mb-2">
         {[0, 1, 2].map(i => (
@@ -443,7 +452,7 @@ export function HowItWorks() {
   }, [])
 
   const panelComponents = [
-    <TerminalPanel key={0} isActive={activePanel === 0} />,
+    <HMACPanel key={0} />,
     <QueuePanel key={1} />,
     <RetryPanel key={2} />,
     <DLQPanel key={3} />,

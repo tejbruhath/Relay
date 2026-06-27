@@ -127,8 +127,6 @@ export function Features() {
           style={{
             animation: 'carouselScroll 40s linear infinite',
           }}
-          onMouseEnter={e => (e.currentTarget.style.animationPlayState = 'paused')}
-          onMouseLeave={e => (e.currentTarget.style.animationPlayState = 'running')}
         >
           {CAROUSEL_ITEMS.map(({ icon: Icon, title, description }, idx) => (
             <div
