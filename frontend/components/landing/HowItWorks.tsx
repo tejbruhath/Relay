@@ -53,23 +53,25 @@ const TERMINAL_LINES = [
   "  }'",
 ]
 
-function TerminalPanel() {
+function TerminalPanel({ isActive = true }: { isActive?: boolean }) {
   const [visibleLines, setVisibleLines] = useState(0)
 
   useEffect(() => {
-    setVisibleLines(0)
+    if (!isActive) {
+      setVisibleLines(0)
+      return
+    }
+
     let i = 0
     const id = setInterval(() => {
       i++
       setVisibleLines(i)
-      // Wait for a bit after finishing, then reset to loop
-      if (i > TERMINAL_LINES.length + 20) {
-        i = 0
-        setVisibleLines(0)
+      if (i >= TERMINAL_LINES.length) {
+        clearInterval(id)
       }
-    }, 120)
+    }, 240) // slowed down typing
     return () => clearInterval(id)
-  }, [])
+  }, [isActive])
 
   return (
     <div className="w-full h-full flex items-center justify-center p-8">
@@ -441,7 +443,7 @@ export function HowItWorks() {
   }, [])
 
   const panelComponents = [
-    <TerminalPanel key={0} />,
+    <TerminalPanel key={0} isActive={activePanel === 0} />,
     <QueuePanel key={1} />,
     <RetryPanel key={2} />,
     <DLQPanel key={3} />,
