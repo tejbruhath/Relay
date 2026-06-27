@@ -86,11 +86,14 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16 relative overflow-hidden">
-      {/* Black → Orange gradient background */}
+      {/* Solid black background */}
+      <div className="fixed inset-0 bg-[#07090F] pointer-events-none" aria-hidden />
+      
+      {/* Harsh orange bottom glow */}
       <div
-        className="fixed inset-0 pointer-events-none"
+        className="fixed bottom-0 left-0 right-0 h-[50vh] pointer-events-none"
         style={{
-          background: 'linear-gradient(to bottom, #07090F 0%, #1a0a00 50%, #2d1200 75%, #3d1800 100%)',
+          background: 'linear-gradient(to bottom, transparent 0%, rgba(255,69,0,0.05) 60%, rgba(255,69,0,0.25) 100%)',
         }}
         aria-hidden
       />
