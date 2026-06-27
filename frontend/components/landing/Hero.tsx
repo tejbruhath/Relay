@@ -14,7 +14,8 @@ interface Bar {
 }
 
 const BAR_COUNT = 48
-const MOUSE_RADIUS = 120
+// Wider mouse influence radius (roughly half of canvas width at init ≈ 300px)
+const MOUSE_RADIUS = 320
 
 export function Hero() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -39,9 +40,9 @@ export function Hero() {
 
       bars = Array.from({ length: BAR_COUNT }, (_, i) => ({
         x: (i / (BAR_COUNT - 1)) * width,
-        baseHeight: 0.15 + Math.random() * 0.45,
+        baseHeight: 0.25 + Math.random() * 0.55,   // taller bars
         phase: Math.random() * Math.PI * 2,
-        speed: 0.3 + Math.random() * 0.5,
+        speed: 0.15 + Math.random() * 0.25,         // half speed
       }))
     }
 
@@ -60,18 +61,21 @@ export function Hero() {
 
         const dist = Math.hypot(x - mx, (height / 2) - my)
 
+        // Wider hover radius, 75% opacity at center, 50% base
         let opacity: number
-        if (dist < 60) {
-          opacity = 0.8
+        if (dist < MOUSE_RADIUS * 0.15) {
+          opacity = 0.75   // centre of cursor influence
         } else if (dist < MOUSE_RADIUS) {
-          opacity = 0.15 + (1 - dist / MOUSE_RADIUS) * 0.65
+          const t2 = 1 - dist / MOUSE_RADIUS
+          opacity = 0.50 + t2 * 0.25  // 0.50 → 0.75 as you approach centre
         } else {
-          opacity = 0.12
+          opacity = 0.50   // base visibility at 50%
         }
 
+        // Wider bars: 4px wide instead of 2px
         ctx.fillStyle = `rgba(255,69,0,${opacity})`
         ctx.beginPath()
-        ctx.roundRect(x - 1, y, 2, h, 1)
+        ctx.roundRect(x - 2, y, 4, h, 2)
         ctx.fill()
       }
 
@@ -118,12 +122,12 @@ export function Hero() {
         aria-hidden
       />
 
-      {/* Radial vignette overlay */}
+      {/* Radial vignette overlay — softer so bars show through */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'radial-gradient(ellipse 70% 60% at 50% 50%, transparent 0%, var(--bg-base) 80%)',
+            'radial-gradient(ellipse 80% 70% at 50% 50%, transparent 0%, var(--bg-base) 85%)',
         }}
         aria-hidden
       />
@@ -144,7 +148,7 @@ export function Hero() {
           </span>
         </div>
 
-        {/* Headline — F-pattern: key stat in first line */}
+        {/* Headline */}
         <h1
           className="font-display font-bold leading-[1.05] mb-6"
           style={{ fontSize: 'clamp(42px, 7vw, 68px)' }}

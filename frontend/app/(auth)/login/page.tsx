@@ -58,14 +58,31 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16 bg-[var(--bg-base)]">
-      {/* Background grid */}
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16 relative overflow-hidden">
+      {/* Black → Orange gradient background */}
       <div
-        className="fixed inset-0 pointer-events-none opacity-[0.03]"
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          background: 'linear-gradient(to bottom, #07090F 0%, #1a0a00 50%, #2d1200 75%, #3d1800 100%)',
+        }}
+        aria-hidden
+      />
+      {/* Subtle grid */}
+      <div
+        className="fixed inset-0 pointer-events-none opacity-[0.04]"
         style={{
           backgroundImage:
             'linear-gradient(var(--bg-border) 1px, transparent 1px), linear-gradient(90deg, var(--bg-border) 1px, transparent 1px)',
           backgroundSize: '48px 48px',
+        }}
+        aria-hidden
+      />
+      {/* Glow orb */}
+      <div
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse, rgba(255,69,0,0.18) 0%, transparent 70%)',
+          filter: 'blur(40px)',
         }}
         aria-hidden
       />
@@ -79,7 +96,14 @@ export default function LoginPage() {
           Relay
         </Link>
 
-        <div className="rounded-[12px] border border-[var(--bg-border)] bg-[var(--bg-surface)] p-8">
+        <div
+          className="rounded-[16px] border border-[rgba(255,69,0,0.15)] p-8"
+          style={{
+            background: 'rgba(13,17,23,0.85)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 0 60px rgba(255,69,0,0.08), 0 1px 0 rgba(255,255,255,0.05) inset',
+          }}
+        >
           <h1 className="font-display font-bold text-[24px] text-[var(--text-primary)] mb-1">
             Welcome back
           </h1>

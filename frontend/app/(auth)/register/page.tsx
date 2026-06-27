@@ -27,7 +27,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
-  // After registration — display API key once
   const [apiKeyModal, setApiKeyModal] = useState<{
     open: boolean
     apiKey: string
@@ -60,8 +59,8 @@ export default function RegisterPage() {
         name: form.name,
         email: form.email,
         password: form.password,
+        confirm_password: form.confirmPassword,
       })
-      // Store auth — API key is shown once then never again
       setApiKeyModal({
         open: true,
         apiKey: res.api_key,
@@ -77,7 +76,6 @@ export default function RegisterPage() {
   }
 
   function handleModalClose() {
-    // Persist auth ONLY when user dismisses the modal (they've had a chance to copy key)
     setApiKeyAuth({
       apiKey: apiKeyModal.apiKey,
       tenantId: apiKeyModal.tenantId,
@@ -87,10 +85,18 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16 bg-[var(--bg-base)]">
-      {/* Background subtle grid */}
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16 relative overflow-hidden">
+      {/* Black → Orange gradient background */}
       <div
-        className="fixed inset-0 pointer-events-none opacity-[0.03]"
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          background: 'linear-gradient(to bottom, #07090F 0%, #1a0a00 50%, #2d1200 75%, #3d1800 100%)',
+        }}
+        aria-hidden
+      />
+      {/* Subtle noise texture */}
+      <div
+        className="fixed inset-0 pointer-events-none opacity-[0.04]"
         style={{
           backgroundImage:
             'linear-gradient(var(--bg-border) 1px, transparent 1px), linear-gradient(90deg, var(--bg-border) 1px, transparent 1px)',
@@ -98,8 +104,17 @@ export default function RegisterPage() {
         }}
         aria-hidden
       />
+      {/* Glow orb */}
+      <div
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse, rgba(255,69,0,0.18) 0%, transparent 70%)',
+          filter: 'blur(40px)',
+        }}
+        aria-hidden
+      />
 
-      <div className="relative w-full max-w-md animate-fade-up">
+      <div className="relative z-10 w-full max-w-md animate-fade-up">
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2 mb-8 font-display font-bold text-[20px]">
           <div className="w-8 h-8 rounded-[7px] bg-[var(--accent-signal)] flex items-center justify-center">
@@ -108,7 +123,14 @@ export default function RegisterPage() {
           Relay
         </Link>
 
-        <div className="rounded-[12px] border border-[var(--bg-border)] bg-[var(--bg-surface)] p-8">
+        <div
+          className="rounded-[16px] border border-[rgba(255,69,0,0.15)] p-8"
+          style={{
+            background: 'rgba(13,17,23,0.85)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 0 60px rgba(255,69,0,0.08), 0 1px 0 rgba(255,255,255,0.05) inset',
+          }}
+        >
           <h1 className="font-display font-bold text-[24px] text-[var(--text-primary)] mb-1">
             Create your account
           </h1>
@@ -198,7 +220,7 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      {/* API Key display modal — shown exactly once */}
+      {/* API Key display modal */}
       <Modal
         isOpen={apiKeyModal.open}
         onClose={handleModalClose}
