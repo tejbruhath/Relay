@@ -30,11 +30,23 @@ class SubscriptionStatusView(APIView):
 
     def get(self, request):
         tenant = request.user
+        
+        def fetch_subscription():
+            try:
+                sub = Subscription.objects.get(tenant=tenant)
+                return SubscriptionStatusSerializer(sub).data
+            except Subscription.DoesNotExist:
+                return {
+                    'plan': 'free',
+                    'status': 'active',
+                    'current_period_start': None,
+                    'current_period_end': None,
+                    'razorpay_subscription_id': None,
+                }
+                
         data = cache_aside(
             f'relay:cache:subscription:{tenant.id}',
-            lambda: SubscriptionStatusSerializer(
-                Subscription.objects.get(tenant=tenant)
-            ).data,
+            fetch_subscription,
             300,
         )
         return Response(data)
