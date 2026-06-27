@@ -17,7 +17,7 @@ const FEATURES = [
     icon: Inbox,
     title: 'Dead Letter Queue',
     description:
-      'Failed events don't vanish. Inspect, replay, or discard on your terms. Full payload preserved.',
+      "Failed events don't vanish. Inspect, replay, or discard on your terms. Full payload preserved.",
   },
   {
     icon: Gauge,

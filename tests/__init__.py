@@ -1,1 +1,1 @@
-# Tests module
+# tests/__init__.py

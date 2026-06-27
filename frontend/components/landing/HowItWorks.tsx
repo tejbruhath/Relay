@@ -20,7 +20,7 @@ const PANELS = [
     step: '03',
     title: 'Your customer receives it',
     description:
-      'Relay POSTs to your customer's endpoint with exponential backoff on failure. Every attempt is logged with status code, latency, and body.',
+      "Relay POSTs to your customer's endpoint with exponential backoff on failure. Every attempt is logged with status code, latency, and body.",
   },
 ]
 

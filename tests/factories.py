@@ -1,77 +1,84 @@
 import factory
-from django.utils import timezone
+import hashlib
+from factory.django import DjangoModelFactory
 from apps.tenants.models import Tenant, APIKey
 from apps.webhooks.models import WebhookEndpoint, WebhookEvent, DeliveryAttempt
-from apps.billing.models import Subscription
-import hashlib
+from apps.billing.models import Subscription, PaymentRecord
 
-class TenantFactory(factory.django.DjangoModelFactory):
+RAW_KEY = "rly_live_testkey00000000000000000000000000000000000000000000000000"
+RAW_SECRET = "whsec_testsecret0000000000000000000000000000000000000000000000"
+
+class TenantFactory(DjangoModelFactory):
     class Meta:
         model = Tenant
-
-    name = factory.Faker('company')
-    email = factory.Faker('email')
-    plan = 'free'
+    name = factory.Sequence(lambda n: f"Tenant {n}")
+    email = factory.Sequence(lambda n: f"tenant{n}@test.com")
+    password_hash = "argon2_hashed_password"
+    plan = "free"
     delivery_count = 0
+    is_active = True
 
-
-class APIKeyFactory(factory.django.DjangoModelFactory):
+class APIKeyFactory(DjangoModelFactory):
     class Meta:
         model = APIKey
-
     tenant = factory.SubFactory(TenantFactory)
-    name = 'Test Key'
-    # We must match the app's hash generation pattern. 
-    # API key generation in core.utils returns raw_key and key_hash.
-    # The key_hash is sha256(raw_key).
-    # Since tests need to pass auth, the fixture logic in conftest will set the raw key.
-    # This factory just sets dummy data that will be overridden.
-    key_hash = factory.Sequence(lambda n: hashlib.sha256(f"dummy_{n}".encode()).hexdigest())
-    prefix = 'rly_live_test'
+    name = "Test Key"
+    key_hash = hashlib.sha256(RAW_KEY.encode()).hexdigest()
+    prefix = RAW_KEY[:16]
+    is_active = True
+    last_used_at = None
 
-
-class WebhookEndpointFactory(factory.django.DjangoModelFactory):
+class WebhookEndpointFactory(DjangoModelFactory):
     class Meta:
         model = WebhookEndpoint
-
     tenant = factory.SubFactory(TenantFactory)
-    url = factory.Faker('url')
-    description = 'Test Endpoint'
-    secret_hash = factory.Sequence(lambda n: hashlib.sha256(f"secret_{n}".encode()).hexdigest())
-    secret_prefix = 'whsec_test'
+    url = factory.Sequence(lambda n: f"https://example{n}.com/webhook")
+    description = "Test endpoint"
+    secret_hash = hashlib.sha256(RAW_SECRET.encode()).hexdigest()
+    secret_prefix = RAW_SECRET[:12]
+    is_active = True
+    rate_limit_per_minute = 60
 
-
-class WebhookEventFactory(factory.django.DjangoModelFactory):
+class WebhookEventFactory(DjangoModelFactory):
     class Meta:
         model = WebhookEvent
-
     tenant = factory.SubFactory(TenantFactory)
-    endpoint = factory.SubFactory(WebhookEndpointFactory)
-    event_type = 'test.event'
-    payload = {'foo': 'bar'}
-    idempotency_key = factory.Sequence(lambda n: f"idem_{n}")
-    status = WebhookEvent.STATUS_PENDING
+    endpoint = factory.SubFactory(WebhookEndpointFactory, tenant=factory.SelfAttribute('..tenant'))
+    event_type = "order.created"
+    payload = {"order_id": "test-123", "amount": 5000}
+    idempotency_key = factory.Sequence(lambda n: f"idem-key-{n}")
+    status = "pending"
+    attempt_count = 0
 
-
-class DeliveryAttemptFactory(factory.django.DjangoModelFactory):
+class DeliveryAttemptFactory(DjangoModelFactory):
     class Meta:
         model = DeliveryAttempt
-
     event = factory.SubFactory(WebhookEventFactory)
     attempt_number = 1
-    status = DeliveryAttempt.STATUS_SUCCESS
+    status = "success"
     http_status_code = 200
-    duration_ms = 100
+    response_body = "OK"
+    duration_ms = 150
+    error_message = None
 
-
-class SubscriptionFactory(factory.django.DjangoModelFactory):
+class SubscriptionFactory(DjangoModelFactory):
     class Meta:
         model = Subscription
-
     tenant = factory.SubFactory(TenantFactory)
-    plan = 'pro'
-    razorpay_subscription_id = factory.Sequence(lambda n: f"sub_{n}")
-    razorpay_plan_id = 'plan_test'
-    status = 'active'
-    current_period_start = factory.LazyFunction(timezone.now)
-    current_period_end = factory.LazyFunction(lambda: timezone.now() + timezone.timedelta(days=30))
+    plan = "pro"
+    razorpay_subscription_id = factory.Sequence(lambda n: f"sub_{n:08d}")
+    razorpay_plan_id = "plan_test_pro"
+    status = "active"
+    current_period_start = None
+    current_period_end = None
+
+class PaymentRecordFactory(DjangoModelFactory):
+    class Meta:
+        model = PaymentRecord
+    tenant = factory.SubFactory(TenantFactory)
+    razorpay_payment_id = factory.Sequence(lambda n: f"pay_{n:08d}")
+    razorpay_subscription_id = factory.Sequence(lambda n: f"sub_{n:08d}")
+    amount = 5000
+    currency = "INR"
+    status = "captured"
+    captured_at = None
