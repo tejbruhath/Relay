@@ -411,6 +411,37 @@ export function HowItWorks() {
             trigger: wrapper,
             start: 'top top',
             end: 'bottom bottom',
+            onEnter: (self) => {
+              // If entering from the top with high momentum (skipped > 5% of section)
+              if (self.progress > 0.05) {
+                window.scrollTo({ top: self.start, behavior: 'instant' } as any)
+                
+                // Block momentum scroll events temporarily to catch the user at Panel 1
+                const prevent = (e: Event) => e.preventDefault()
+                window.addEventListener('wheel', prevent, { passive: false })
+                window.addEventListener('touchmove', prevent, { passive: false })
+                
+                setTimeout(() => {
+                  window.removeEventListener('wheel', prevent)
+                  window.removeEventListener('touchmove', prevent)
+                }, 600)
+              }
+            },
+            onEnterBack: (self) => {
+              // Same protection when scrolling extremely fast backwards into the section
+              if (self.progress < 0.95) {
+                window.scrollTo({ top: self.end, behavior: 'instant' } as any)
+                
+                const prevent = (e: Event) => e.preventDefault()
+                window.addEventListener('wheel', prevent, { passive: false })
+                window.addEventListener('touchmove', prevent, { passive: false })
+                
+                setTimeout(() => {
+                  window.removeEventListener('wheel', prevent)
+                  window.removeEventListener('touchmove', prevent)
+                }, 600)
+              }
+            },
             onUpdate: (self) => {
               if (progressRef.current) {
                 progressRef.current.style.width = `${self.progress * 100}%`
