@@ -62,7 +62,11 @@ function TerminalPanel() {
     const id = setInterval(() => {
       i++
       setVisibleLines(i)
-      if (i >= TERMINAL_LINES.length) clearInterval(id)
+      // Wait for a bit after finishing, then reset to loop
+      if (i > TERMINAL_LINES.length + 20) {
+        i = 0
+        setVisibleLines(0)
+      }
     }, 120)
     return () => clearInterval(id)
   }, [])
