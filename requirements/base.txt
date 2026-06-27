@@ -10,3 +10,4 @@ psycopg[binary]==3.2.*
 django-redis==5.4.*
 django-celery-beat==2.7.*
 setuptools<81
+django-cors-headers==4.9.0
