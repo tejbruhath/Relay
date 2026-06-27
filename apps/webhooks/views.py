@@ -81,27 +81,27 @@ class EndpointDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class EventListView(APIView):
+class EventListCreateView(AsyncAPIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        tenant = request.user
-        qs = WebhookEvent.objects.filter(tenant=tenant).order_by('-created_at')
+    async def get(self, request):
+        @sync_to_async
+        def fetch():
+            tenant = request.user
+            qs = WebhookEvent.objects.filter(tenant=tenant).order_by('-created_at')
 
-        if status_filter := request.query_params.get('status'):
-            qs = qs.filter(status=status_filter)
-        if endpoint_id := request.query_params.get('endpoint_id'):
-            qs = qs.filter(endpoint_id=endpoint_id)
+            if status_filter := request.query_params.get('status'):
+                qs = qs.filter(status=status_filter)
+            if endpoint_id := request.query_params.get('endpoint_id'):
+                qs = qs.filter(endpoint_id=endpoint_id)
 
-        from apps.core.pagination import StandardPagination
-        paginator = StandardPagination()
-        page = paginator.paginate_queryset(qs, request)
-        serializer = EventListSerializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
-
-
-class EventCreateView(AsyncAPIView):
-    permission_classes = [IsAuthenticated]
+            from apps.core.pagination import StandardPagination
+            paginator = StandardPagination()
+            page = paginator.paginate_queryset(qs, request)
+            serializer = EventListSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        return await fetch()
 
     async def post(self, request):
         serializer = EventDispatchSerializer(data=request.data, context={'request': request})
